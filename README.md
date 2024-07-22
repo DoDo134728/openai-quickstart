@@ -1,3 +1,6 @@
+## Day1 Homework
+ChatGPT Link: https://chatgpt.com/share/a56e266b-050c-4165-b1b3-5c6fb6dad94b
+
 # OpenAI 快速入门
 
 <p align="center">
@@ -145,4 +148,3 @@ Jupyter Lab 输出的日志将会保存在 `nohup.out` 文件（已在 .gitignor
 Django Peng - pjt73651@email.com
 
 项目链接: https://github.com/DjangoPeng/openai-quickstart
-
