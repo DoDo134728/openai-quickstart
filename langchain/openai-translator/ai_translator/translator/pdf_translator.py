@@ -15,7 +15,7 @@ class PDFTranslator:
                     output_file_format: str = 'markdown',
                     source_language: str = "English",
                     target_language: str = 'Chinese',
-                    pages: Optional[int] = None):
+                    pages: Optional[int] = 3):
         
         self.book = self.pdf_parser.parse_pdf(input_file, pages)
 

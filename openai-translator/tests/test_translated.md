@@ -1,22 +1,11 @@
-このデータセットには、OpenAIのAI言語モデルであるChatGPTが提供する2つのテストサンプルが含まれています。
-これらのサンプルには、テキストと表の形式の両方をサポートする英語から中国語への翻訳ソフトウェアをテストするために使用できる、マークダウンテーブルと英文のテキストが含まれています。
-テキストのテスト
-The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English
-alphabet at least once. Pangrams are often used to test fonts, keyboards, and other text-related
-tools. In addition to English, there are pangrams in many other languages. Some pangrams are more
-difficult to construct due to the unique characteristics of the language.
-テーブルのテスト
+Données de test  
+Ce jeu de données contient deux échantillons de test fournis par ChatGPT, un modèle de langage IA développé par OpenAI.  
+Ces échantillons comprennent un tableau en markdown et un passage en anglais, qui peuvent être utilisés pour tester un logiciel de traduction de l'anglais vers le chinois prenant en charge à la fois les formats texte et tableau.  
 
-| [フルーツ | 色 | 価格（USD）] |
-| --- | --- | --- |
-| [リンゴ | 赤 | 1.20] |
-| [バナナ | 黄色 | 0.50] |
-| [オレンジ | オレンジ色 | 0.80] |
-| [イチゴ | 赤 | 2.50] |
-| [ブルーベリー | 青 | 3.00] |
-| [キウイ | グリーン | 1.00] |
-| [マンゴー | オレンジ色 | 1.50] |
-| [ブドウ | 紫 | 2.00] |
+Test de texte  
+Le rapide renard brun saute par-dessus le chien paresseux. Ce pangramme contient chaque lettre de l'alphabet anglais au moins une fois. Les pangrammes sont souvent utilisés pour tester des polices, des claviers et d'autres outils liés au texte. En plus de l'anglais, il existe des pangrammes dans de nombreuses autres langues. Certains pangrammes sont plus difficiles à construire en raison des caractéristiques uniques de la langue.  
+
+Test de tableau
 
 ---
 
