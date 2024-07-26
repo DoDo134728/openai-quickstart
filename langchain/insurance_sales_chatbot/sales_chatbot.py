@@ -24,18 +24,26 @@ def sales_chat(message, history):
     print(f"[history]{history}")
     # TODO: 从命令行参数中获取
     enable_chat = True
-
+    llm = ChatOpenAI(model_name="gpt-4", temperature=1, base_url="https://api.xiaoai.plus/v1")
+    messages = [
+        ("system", "你是保险销售专家，用于回答客户提出的保险行业相关的难题。但如果用户问题不是保险相关，可以引导客户回保险话题。但注意不要让人察觉出你是一个Chatbot，要能通过图灵测试。"),
+        ("human", message),
+    ]
     ans = SALES_BOT({"query": message})
     # 如果检索出结果，或者开了大模型聊天模式
     # 返回 RetrievalQA combine_documents_chain 整合的结果
-    if ans["source_documents"] or enable_chat:
+    if len(ans["source_documents"]) != 0:
         print(f"[result]{ans['result']}")
         print(f"[source_documents]{ans['source_documents']}")
         return ans["result"]
+    elif enable_chat:
+        response = llm.invoke(messages)
+        print(f"[source_documents]{ans['source_documents']}")
+        print(f"[llm_result]{response.content}")
+        return response.content
     # 否则输出套路话术
     else:
         return "这个问题我要问问领导"
-    
 
 def launch_gradio():
     demo = gr.ChatInterface(
