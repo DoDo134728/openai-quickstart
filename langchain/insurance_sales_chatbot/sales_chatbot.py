@@ -6,9 +6,9 @@ from langchain_openai import ChatOpenAI
 from langchain_community.vectorstores import FAISS
 
 
-def initialize_sales_bot(vector_store_dir: str="real_estates_sale_test"):
-    db = FAISS.load_local(vector_store_dir, OpenAIEmbeddings(api_key="sk-AlhxlLBU0BPYJD6I8870F34f377b47Dd8c1f86Ac73AfBe17", base_url="https://api.xiaoai.plus/v1"), allow_dangerous_deserialization=True)
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, api_key="sk-AlhxlLBU0BPYJD6I8870F34f377b47Dd8c1f86Ac73AfBe17", base_url="https://api.xiaoai.plus/v1")
+def initialize_sales_bot(vector_store_dir: str="real_scct_agent_test"):
+    db = FAISS.load_local(vector_store_dir, OpenAIEmbeddings(api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4", base_url="https://api.xiaoai.plus/v1"), allow_dangerous_deserialization=True)
+    llm = ChatOpenAI(model_name="gpt-4", temperature=0, api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4", base_url="https://api.xiaoai.plus/v1")
     
     global SALES_BOT    
     SALES_BOT = RetrievalQA.from_chain_type(llm,
@@ -24,9 +24,9 @@ def sales_chat(message, history):
     print(f"[history]{history}")
     # TODO: 从命令行参数中获取
     enable_chat = True
-    llm = ChatOpenAI(model_name="gpt-4", temperature=1, base_url="https://api.xiaoai.plus/v1")
+    llm = ChatOpenAI(model_name="gpt-4", temperature=1, base_url="https://api.xiaoai.plus/v1", api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4")
     messages = [
-        ("system", "你是保险销售专家，用于回答客户提出的保险行业相关的难题。但如果用户问题不是保险相关，可以引导客户回保险话题。但注意不要让人察觉出你是一个Chatbot，要能通过图灵测试。"),
+        ("system", "你是SCCT Agent，帮助用户回答有关SCCT的相关知识问题。如果没有准确答案，则回复'暂无相关参考'，不要自己编造。如果问的问题不与航运物流业相关，则引导用户问航运物流相关问题。"),
         ("human", message),
     ]
     ans = SALES_BOT({"query": message})
@@ -48,7 +48,7 @@ def sales_chat(message, history):
 def launch_gradio():
     demo = gr.ChatInterface(
         fn=sales_chat,
-        title="保险销售",
+        title="SCCT Agent",
         # retry_btn=None,
         # undo_btn=None,
         chatbot=gr.Chatbot(height=600),
