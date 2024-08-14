@@ -42,6 +42,7 @@ def sales_chat(message, history):
                 [Customer question]Internal Dashboard有几个视图。
                 [System answer]3个。
             Then call function write_qa_pair(question="Internal Dashboard有几个视图。", answer="3个。")
+            
         """
         print('-------------------------------------------------------------------------------------')
         with open('qa_pairs.txt', 'a', encoding='utf-8') as file:
@@ -54,22 +55,19 @@ def sales_chat(message, history):
     
     tools = [multiply, write_qa_pair]
     prompt = hub.pull("hwchase17/openai-tools-agent")
-    # 如果没有准确答案，则回复'暂无相关参考'，不要自己编造。如果问的问题不与航运物流业相关，则引导用户问航运物流相关问题。
+    
     prompt.messages[0].prompt.template = '''
                                             你是SCCT(Supply chain control tower) Agent，帮助用户回答有关SCCT的相关知识问题。
                                             如果用户愿意补充你的qa_pairs.txt，那就调用函数写入我们的qa_pairs.txt中。
+                                            如果没有准确答案，则回复'暂无相关参考'或者
+                                            让用户帮助补充相关知识(例如帮我补充这个问答对到知识库中[Customer question]Internal Dashboard有几个视图。[System answer]3个。Agent解析出来的参数的名字只能是question与answer,且必须都有。)，不要自己编造。
+                                            如果问的问题不与航运物流业相关，则引导用户问航运物流相关问题。
                                             )
                                             '''
     llm = ChatOpenAI(model_name="gpt-4", temperature=0, base_url="https://api.xiaoai.plus/v1", api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4")
     agent = create_tool_calling_agent(llm, tools, prompt=prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    # TODO: 从命令行参数中获取
-    enable_chat = True
-    # messages = [
-    #     ("system", "你是SCCT Agent，帮助用户回答有关SCCT的相关知识问题。如果没有准确答案，则回复'暂无相关参考'，不要自己编造。如果问的问题不与航运物流业相关，则引导用户问航运物流相关问题。"),
-    #     ("human", message),
-    # ]
     userQuery = {
         "input":message
     }
