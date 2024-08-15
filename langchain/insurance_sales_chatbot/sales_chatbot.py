@@ -7,6 +7,11 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.tools import tool
 from langchain import hub
 from langchain.agents import AgentExecutor, create_tool_calling_agent
+from io import BytesIO
+from openai import OpenAI
+import base64
+import requests
+from PIL import Image
 
 def initialize_sales_bot(vector_store_dir: str="real_scct_agent_test"):
     db = FAISS.load_local(vector_store_dir, OpenAIEmbeddings(api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4", base_url="https://api.xiaoai.plus/v1"), allow_dangerous_deserialization=True)
@@ -25,13 +30,6 @@ def sales_chat(message, history):
     print(f"[message]{message}")
     print(f"[history]{history}")
 
-    # 定义Multiply函数
-    @tool
-    def multiply(first_int: int, second_int: int) -> int:
-        """Multiply two integers together."""
-        print('-------------------------------------------------------------------------------------')
-        return first_int * second_int
-    
     @tool
     def write_qa_pair(question: str, answer: str) -> str:
         """
@@ -53,7 +51,7 @@ def sales_chat(message, history):
 
         return "知识问答对补充成功。"
     
-    tools = [multiply, write_qa_pair]
+    tools = [write_qa_pair]
     prompt = hub.pull("hwchase17/openai-tools-agent")
     
     prompt.messages[0].prompt.template = '''
@@ -84,14 +82,88 @@ def sales_chat(message, history):
         print(f"[llm_result]{response['output']}")
         return response['output']
 
+def view_image(img):
+    prompt = """
+            任务描述：
+                你将收到一张系统功能的截图。
+                你的任务是识别图像中的功能点，并为每个功能点编写测试点和验收标准（Acceptance Criteria）。
+            输出格式：
+                每个功能点的测试点和验收标准应按照以下格式编写：
+                Given [前提条件]
+                When [执行的操作]
+                Then [预期结果]
+
+            示例：
+                功能点：登录按钮
+                Given 用户在登录页面
+                When 用户点击登录按钮
+                Then 系统应验证用户凭证并重定向到主页
+
+            注意事项：
+                确保所有测试点和验收标准都清晰、具体且可测试。
+                如果图像中有多个功能点，请分别列出每个功能点的测试点和验收标准。
+            """
+    client = OpenAI(
+        base_url="https://api.xiaoai.plus/v1",
+        api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4"
+    ) 
+
+    pil_image = Image.fromarray(img)
+
+    buffered = BytesIO()
+    pil_image.save(buffered, format="JPEG")
+    image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+    # 构造请求的 HTTP Header
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {client.api_key}"
+    }
+
+    # 构造请求的负载
+    payload = {
+        "model": "gpt-4-turbo",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                ]
+            }
+        ],
+        "max_tokens": 3000
+    }
+
+    # 发送 HTTP 请求
+    response = requests.post("https://api.xiaoai.plus/v1/chat/completions", headers=headers, json=payload)
+
+    # 检查响应并提取所需的 content 字段
+    if response.status_code == 200:
+        response_data = response.json()
+        content = response_data['choices'][0]['message']['content']
+        return content
+    else:
+        return f"Error: {response.status_code}, {response.text}"
+
 def launch_gradio():
-    demo = gr.ChatInterface(
+
+    app_one = gr.ChatInterface(
         fn=sales_chat,
         title="SCCT Agent",
         # retry_btn=None,
-        # undo_btn=None,
-        chatbot=gr.Chatbot(height=600),
+        # # # undo_btn=None,
+        chatbot=gr.Chatbot(height=600))
+    
+    app_two = gr.Interface(fn = view_image, inputs="image", outputs="text")
+
+    demo = gr.TabbedInterface(
+        [
+            app_one, app_two
+        ],
+        tab_names=["SCCT Agent", "SCCT Image Agent"]
     )
+    
 
     demo.launch(share=True, server_name="0.0.0.0")
 
