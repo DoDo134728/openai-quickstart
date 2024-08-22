@@ -14,19 +14,17 @@ import requests
 from PIL import Image
 
 api_key = "sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4"
-base_url="https://api.xiaoai.plus/v1"
+base_url = "https://api.xiaoai.plus/v1"
 
 def initialize_sales_bot(vector_store_dir: str="real_scct_agent_test"):
     db = FAISS.load_local(vector_store_dir, OpenAIEmbeddings(api_key=api_key, base_url=base_url), allow_dangerous_deserialization=True)
     llm = ChatOpenAI(model_name="gpt-4", temperature=0, api_key=api_key, base_url=base_url)
-    
     global SALES_BOT    
     SALES_BOT = RetrievalQA.from_chain_type(llm,
                                            retriever=db.as_retriever(search_type="similarity_score_threshold",
                                                                      search_kwargs={"score_threshold": 0.8}))
     # 返回向量数据库的检索结果
     SALES_BOT.return_source_documents = True
-
     return SALES_BOT
 
 def sales_chat(message, history):
@@ -65,7 +63,7 @@ def sales_chat(message, history):
                                             如果问的问题不与航运物流业相关，则引导用户问航运物流相关问题。
                                             )
                                             '''
-    llm = ChatOpenAI(model_name="gpt-4", temperature=0, base_url="https://api.xiaoai.plus/v1", api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4")
+    llm = ChatOpenAI(model_name="gpt-4", temperature=0, api_key=api_key, base_url=base_url)
     agent = create_tool_calling_agent(llm, tools, prompt=prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
@@ -73,7 +71,6 @@ def sales_chat(message, history):
         "input":message
     }
     ans = SALES_BOT({"query": message})
-    # 如果检索出结果，或者开了大模型聊天模式
     # 返回 RetrievalQA combine_documents_chain 整合的结果
     if len(ans["source_documents"]) != 0:
         print(f"[result]{ans['result']}")
