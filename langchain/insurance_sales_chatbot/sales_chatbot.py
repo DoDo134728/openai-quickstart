@@ -78,29 +78,17 @@ def sales_chat(message, history):
         return ans["result"]
     else:
         response = agent_executor.invoke(userQuery)
-        print(f"[source_documents]{ans['source_documents']}")
         print(f"[llm_result]{response['output']}")
         return response['output']
 
-def view_image(img):
-    prompForDetactFunction = """
-            任务描述：
-                你将收到一张系统功能的截图。
-                你的任务是识别图像中的功能点。
-            输出格式：
-                '输入用户名','登录','提交表单'
-            注意事项：
-                确保所有功能都已被识别到。
-                如果图像中有多个功能点, 请参考输出格式列出。
-            """
-    
+def get_img_to_text_result(prompt, img):
     client = OpenAI(
-        base_url="https://api.xiaoai.plus/v1",
-        api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4"
-    ) 
+        api_key=api_key,
+        base_url=base_url 
+    )
     
+    # 处理图片输入
     pil_image = Image.fromarray(img)
-
     buffered = BytesIO()
     pil_image.save(buffered, format="JPEG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -118,7 +106,7 @@ def view_image(img):
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompForDetactFunction},
+                    {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
                 ]
             }
@@ -128,27 +116,43 @@ def view_image(img):
     }
 
     # 发送 HTTP 请求
-    response = requests.post("https://api.xiaoai.plus/v1/chat/completions", headers=headers, json=payload)
+    response = requests.post(base_url +"/chat/completions", headers=headers, json=payload)
     
     # 检查响应并提取所需的 content 字段
     if response.status_code == 200:
         response_data = response.json()
         content = response_data['choices'][0]['message']['content']
+        return content
     else:
         return f"Error: {response.status_code}, {response.text}"
+
+def view_image(img):
+    prompForDetactFunction = """
+            任务描述：
+                你将收到一张系统功能的截图。
+                你的任务是识别图像中的功能点。
+            输出格式：
+                '输入用户名','登录','提交表单'
+            注意事项：
+                确保所有功能都已被识别到。
+                如果图像中有多个功能点, 请参考输出格式列出。
+            """
     
-    db = FAISS.load_local("real_scct_agent_test", OpenAIEmbeddings(api_key="sk-InMcXCrwx83hEtui3d4242A6C7574aC397AdA0EcC07f56E4", base_url="https://api.xiaoai.plus/v1"), allow_dangerous_deserialization=True)
+    function_list = get_img_to_text_result(prompForDetactFunction, img)
+    
+    db = FAISS.load_local("real_scct_agent_test", OpenAIEmbeddings(api_key=api_key, base_url=base_url), allow_dangerous_deserialization=True)
     topK_retriever = db.as_retriever(search_kwargs={"k": 3, "score_threshold": 0.6})
     source_documents = ''
-    for i in content.split(','):
+    for i in function_list.split(','):
         docs = topK_retriever.get_relevant_documents(i)
         for doc in docs:
             source_documents = source_documents + doc.page_content + "\n"
+    
     prompt = """
             任务描述：
                 你将收到一张系统功能的截图和相关的后端系统逻辑。
                 后端逻辑会以[source_documents]拼接在本Prompt最后。
-                你的任务是识别图像中的功能点，并为每个功能点编写测试点和验收标准（Acceptance Criteria），而且前段UI和后端系统逻辑都要参考，不能只看前端UI。
+                你的任务是识别图像中的功能点, 并为每个功能点编写测试点和验收标准(Acceptance Criteria), 而且前段UI和后端系统逻辑都要参考, 不能只看前端UI。
             输出格式：
                 每个功能点的测试点和验收标准应按照以下格式编写：
                 Given [前提条件]
@@ -167,33 +171,8 @@ def view_image(img):
             """
 
     promptForAC = prompt + '\n' + source_documents
-    print(promptForAC)
-    payloadForAC = {
-        "model": "gpt-4-turbo",
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": promptForAC},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
-                ]
-            }
-        ],
-        "max_tokens": 3000,
-        "temperature": 0
-    }
+    return get_img_to_text_result(promptForAC, img)
     
-    response = requests.post("https://api.xiaoai.plus/v1/chat/completions", headers=headers, json=payloadForAC)
-    
-    # 检查响应并提取所需的 content 字段
-    if response.status_code == 200:
-        response_data = response.json()
-        content = response_data['choices'][0]['message']['content']
-        return content
-    else:
-        return f"Error: {response.status_code}, {response.text}"
-    
-
 def launch_gradio():
 
     app_one = gr.ChatInterface(
