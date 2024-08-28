@@ -203,8 +203,7 @@ def launch_gradio(fnForSCCTAgent, fnForSCCTImageAgent):
         tab_names=["SCCT Agent", "SCCT Image Agent"]
     )
     
-    demo.launch(share=True, server_name="0.0.0.0")
-
+    demo.launch(share=False, server_name="0.0.0.0")
 
 if __name__ == "__main__":
     api_key = "sk-wrPvJlufPtE3zmYAB62cDe655eD54521B0B4996767F0Ea29"
